@@ -26,6 +26,14 @@ describe("normalizeTarget", () => {
     });
   });
 
+  it("accepts a public IPv6 address", () => {
+    expect(normalizeTarget("2606:4700:4700::1111")).toEqual({
+      kind: "ip",
+      input: "2606:4700:4700::1111",
+      host: "2606:4700:4700::1111"
+    });
+  });
+
   it("rejects localhost", () => {
     expect(() => normalizeTarget("localhost")).toThrow("Local and private targets are not allowed");
   });
@@ -60,6 +68,27 @@ describe("normalizeTarget", () => {
     expect(() => normalizeTarget("foo.test")).toThrow("Local and private targets are not allowed");
     expect(() => normalizeTarget("foo.invalid")).toThrow("Local and private targets are not allowed");
     expect(() => normalizeTarget("foo.example")).toThrow("Local and private targets are not allowed");
+  });
+
+  it("rejects non-public special-use IP ranges", () => {
+    const specialUseTargets = [
+      "64:ff9b::192.168.0.1",
+      "2002::1",
+      "2001::1",
+      "2001:2::1",
+      "100::1",
+      "5f00::1",
+      "192.175.48.1",
+      "192.52.193.1"
+    ];
+
+    for (const target of specialUseTargets) {
+      expect(() => normalizeTarget(target)).toThrow("Local and private targets are not allowed");
+    }
+  });
+
+  it("rejects schemeless userinfo ambiguity", () => {
+    expect(() => normalizeTarget("127.0.0.1@example.com")).toThrow("Enter a valid public domain or IP address");
   });
 
   it("rejects malformed input", () => {

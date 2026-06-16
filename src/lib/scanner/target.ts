@@ -21,6 +21,10 @@ function hostFromInput(input: string) {
     return ipaddr.parse(trimmed).toString().toLowerCase();
   }
 
+  if (!trimmed.includes("://") && trimmed.includes("@")) {
+    throw new Error("Enter a valid public domain or IP address");
+  }
+
   try {
     const url = new URL(trimmed.includes("://") ? trimmed : `scan://${trimmed}`);
     return url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
@@ -34,19 +38,8 @@ function assertPublicIp(host: string) {
   const address =
     parsed instanceof ipaddr.IPv6 && parsed.isIPv4MappedAddress() ? parsed.toIPv4Address() : parsed;
   const range = address.range();
-  const blocked = new Set([
-    "unspecified",
-    "broadcast",
-    "multicast",
-    "linkLocal",
-    "loopback",
-    "private",
-    "reserved",
-    "carrierGradeNat",
-    "uniqueLocal"
-  ]);
 
-  if (blocked.has(range)) {
+  if (range !== "unicast") {
     throw new Error("Local and private targets are not allowed");
   }
 }

@@ -9,10 +9,16 @@ export type NormalizedTarget = {
 const DOMAIN_PATTERN =
   /^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
+const DENIED_DOMAIN_SUFFIXES = ["local", "localhost", "test", "invalid", "example"];
+
 function hostFromInput(input: string) {
   const trimmed = input.trim();
   if (!trimmed) {
     throw new Error("Enter a valid public domain or IP address");
+  }
+
+  if (ipaddr.isValid(trimmed)) {
+    return ipaddr.parse(trimmed).toString().toLowerCase();
   }
 
   try {
@@ -25,7 +31,9 @@ function hostFromInput(input: string) {
 
 function assertPublicIp(host: string) {
   const parsed = ipaddr.parse(host);
-  const range = parsed.range();
+  const address =
+    parsed instanceof ipaddr.IPv6 && parsed.isIPv4MappedAddress() ? parsed.toIPv4Address() : parsed;
+  const range = address.range();
   const blocked = new Set([
     "unspecified",
     "broadcast",
@@ -43,10 +51,14 @@ function assertPublicIp(host: string) {
   }
 }
 
+function hasDeniedDomainSuffix(host: string) {
+  return DENIED_DOMAIN_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+
 export function normalizeTarget(input: string): NormalizedTarget {
   const host = hostFromInput(input);
 
-  if (host === "localhost" || host.endsWith(".localhost")) {
+  if (hasDeniedDomainSuffix(host)) {
     throw new Error("Local and private targets are not allowed");
   }
 

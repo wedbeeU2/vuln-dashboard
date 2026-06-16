@@ -33,7 +33,7 @@ function hostFromInput(input: string) {
   }
 }
 
-function assertPublicIp(host: string) {
+export function assertPublicIpAddress(host: string) {
   const parsed = ipaddr.parse(host);
   const address =
     parsed instanceof ipaddr.IPv6 && parsed.isIPv4MappedAddress() ? parsed.toIPv4Address() : parsed;
@@ -56,7 +56,7 @@ export function normalizeTarget(input: string): NormalizedTarget {
   }
 
   if (ipaddr.isValid(host)) {
-    assertPublicIp(host);
+    assertPublicIpAddress(host);
     return { kind: "ip", input, host };
   }
 

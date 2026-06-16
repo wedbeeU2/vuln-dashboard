@@ -12,6 +12,14 @@ type RateLimitResult = {
 const buckets = new Map<string, RateLimitBucket>();
 
 export function checkRateLimit(key: string, limit = 10, windowMs = 60_000): RateLimitResult {
+  if (limit <= 0) {
+    throw new Error("Rate limit must be greater than zero");
+  }
+
+  if (windowMs <= 0) {
+    throw new Error("Rate limit window must be greater than zero");
+  }
+
   const now = Date.now();
   const existing = buckets.get(key);
 

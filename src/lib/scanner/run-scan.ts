@@ -16,7 +16,7 @@ export async function runSecurityScan(input: string): Promise<SecurityReport> {
   ]);
 
   return summarizeReport({
-    target: input,
+    target: target.host,
     normalizedTarget: target.host,
     scannedAt: new Date().toISOString(),
     riskScore: 0,

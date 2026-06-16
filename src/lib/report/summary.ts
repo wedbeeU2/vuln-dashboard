@@ -59,7 +59,9 @@ export function summarizeReport(report: SecurityReport): SecurityReport {
     recommendations.add(TLS_RENEWAL_RECOMMENDATION);
   }
 
-  const missingHeaders = report.headers.flatMap((header) => header.missing.map(normalizeHeaderName));
+  const missingHeaders = report.headers
+    .filter((header) => !header.error && header.status !== undefined)
+    .flatMap((header) => header.missing.map(normalizeHeaderName));
 
   riskScore += Math.min(missingHeaders.length * 5, 30);
 

@@ -24,7 +24,7 @@ describe("summarizeReport", () => {
       baseReport({
         ports: [{ port: 6379, service: "Redis", status: "open" }],
         headers: [
-          { url: "https://example.com", present: {}, missing: ["content-security-policy"], warnings: [] }
+          { url: "https://example.com", status: 200, present: {}, missing: ["content-security-policy"], warnings: [] }
         ]
       })
     );
@@ -46,5 +46,25 @@ describe("summarizeReport", () => {
 
     expect(report.riskScore).toBeGreaterThanOrEqual(30);
     expect(report.recommendations).toContain("Renew or replace the TLS certificate.");
+  });
+
+  it("ignores missing headers from failed header probes", () => {
+    const report = summarizeReport(
+      baseReport({
+        headers: [
+          {
+            url: "https://example.com",
+            present: {},
+            missing: ["content-security-policy", "strict-transport-security"],
+            warnings: [],
+            error: "Header request timed out"
+          }
+        ]
+      })
+    );
+
+    expect(report.riskScore).toBe(0);
+    expect(report.recommendations).not.toContain("Add a Content-Security-Policy header to reduce script injection risk.");
+    expect(report.recommendations).not.toContain("Add Strict-Transport-Security so browsers require HTTPS.");
   });
 });

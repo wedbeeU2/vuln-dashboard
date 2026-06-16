@@ -1,6 +1,7 @@
 import http from "node:http";
 import https from "node:https";
 import type { LookupAddress, LookupAllOptions, LookupOneOptions } from "node:dns";
+import type { IncomingHttpHeaders } from "node:http";
 
 import ipaddr from "ipaddr.js";
 
@@ -41,6 +42,41 @@ function formatUrl(protocol: "http" | "https", host: string) {
   return `${protocol}://${displayHost}`;
 }
 
+export function buildHeaderResult(
+  url: string,
+  protocol: "http" | "https",
+  status: number | undefined,
+  headers: IncomingHttpHeaders
+): HeaderResult {
+  const present: Record<string, string> = {};
+  const missing: string[] = [];
+  const warnings: string[] = [];
+
+  for (const header of SECURITY_HEADERS) {
+    const value = normalizeHeaderValue(headers[header]);
+
+    if (value) {
+      present[headerLabel(header)] = value;
+    } else {
+      missing.push(headerLabel(header));
+    }
+  }
+
+  if (protocol === "https" && !present["Strict-Transport-Security"]) {
+    warnings.push("HTTPS response is missing Strict-Transport-Security");
+  }
+
+  if (!present["Content-Security-Policy"]) {
+    warnings.push("Response is missing Content-Security-Policy");
+  }
+
+  if (!present["X-Content-Type-Options"]) {
+    warnings.push("Response is missing X-Content-Type-Options");
+  }
+
+  return { url, status, present, missing, warnings };
+}
+
 function buildLookup(addresses: ResolvedPublicAddress[]) {
   return (
     hostname: string,
@@ -67,13 +103,14 @@ function inspectHeaders(url: string, protocol: "http" | "https", host: string, a
   return new Promise<HeaderResult>((resolve) => {
     const client = protocol === "https" ? https : http;
     const Agent = protocol === "https" ? https.Agent : http.Agent;
+    const agent = new Agent({ lookup: buildLookup(addresses) });
     const request = client.request(
       {
         hostname: host,
         port: protocol === "https" ? 443 : 80,
         path: "/",
         method: "GET",
-        agent: new Agent({ lookup: buildLookup(addresses) }),
+        agent,
         headers: {
           Host: host,
           "User-Agent": "vuln-dashboard-scanner/1.0"
@@ -81,36 +118,10 @@ function inspectHeaders(url: string, protocol: "http" | "https", host: string, a
         timeout: timeoutMs
       },
       (response) => {
-        response.resume();
-        response.once("end", () => {
-          const present: Record<string, string> = {};
-          const missing: string[] = [];
-          const warnings: string[] = [];
-
-          for (const header of SECURITY_HEADERS) {
-            const value = normalizeHeaderValue(response.headers[header]);
-
-            if (value) {
-              present[headerLabel(header)] = value;
-            } else {
-              missing.push(headerLabel(header));
-            }
-          }
-
-          if (protocol === "https" && !present["Strict-Transport-Security"]) {
-            warnings.push("HTTPS response is missing Strict-Transport-Security");
-          }
-
-          if (!present["Content-Security-Policy"]) {
-            warnings.push("Response is missing Content-Security-Policy");
-          }
-
-          if (!present["X-Content-Type-Options"]) {
-            warnings.push("Response is missing X-Content-Type-Options");
-          }
-
-          resolve({ url, status: response.statusCode, present, missing, warnings });
-        });
+        resolve(buildHeaderResult(url, protocol, response.statusCode, response.headers));
+        response.destroy();
+        request.destroy();
+        agent.destroy();
       }
     );
 
@@ -118,6 +129,7 @@ function inspectHeaders(url: string, protocol: "http" | "https", host: string, a
       request.destroy(new Error("Header request timed out"));
     });
     request.once("error", (error) => {
+      agent.destroy();
       resolve({ url, present: {}, missing: SECURITY_HEADERS.map(headerLabel), warnings: [], error: errorMessage(error) });
     });
     request.end();

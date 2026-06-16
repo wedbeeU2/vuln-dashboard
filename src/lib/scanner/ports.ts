@@ -29,9 +29,14 @@ export const COMMON_PORTS: CommonPort[] = [
 ];
 
 const DEFAULT_TIMEOUT_MS = 3000;
+const DISALLOWED_PORT_DETAIL = "Port is not in the approved common-port list";
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown scanner error";
+}
+
+function approvedPort(port: number) {
+  return COMMON_PORTS.some((item) => item.port === port);
 }
 
 function statusForError(error: NodeJS.ErrnoException): PortStatus {
@@ -104,6 +109,10 @@ export async function checkPort(
   service = "unknown",
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<PortResult> {
+  if (!approvedPort(port)) {
+    return { port, service, status: "error", detail: DISALLOWED_PORT_DETAIL };
+  }
+
   try {
     const resolved = await resolvePublicHost(host);
     return checkPortAgainstAddresses(resolved.addresses, port, service, timeoutMs);

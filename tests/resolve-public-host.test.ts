@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ResolvedPublicAddress } from "@/lib/scanner/resolve-public-host";
 import { resolvePublicHost } from "@/lib/scanner/resolve-public-host";
 
 describe("resolvePublicHost", () => {
   it("returns resolved public addresses for a domain", async () => {
-    const lookup = vi.fn(async () => [
+    const lookup = vi.fn(async (): Promise<ResolvedPublicAddress[]> => [
       { address: "93.184.216.34", family: 4 },
       { address: "2606:2800:220:1:248:1893:25c8:1946", family: 6 }
     ]);
@@ -29,7 +30,7 @@ describe("resolvePublicHost", () => {
   });
 
   it("rejects a domain when any resolved address is not public unicast", async () => {
-    const lookup = vi.fn(async () => [
+    const lookup = vi.fn(async (): Promise<ResolvedPublicAddress[]> => [
       { address: "93.184.216.34", family: 4 },
       { address: "192.168.1.10", family: 4 }
     ]);
@@ -40,7 +41,7 @@ describe("resolvePublicHost", () => {
   });
 
   it("rejects loopback and link-local resolved addresses", async () => {
-    const lookup = vi.fn(async () => [
+    const lookup = vi.fn(async (): Promise<ResolvedPublicAddress[]> => [
       { address: "127.0.0.1", family: 4 },
       { address: "fe80::1", family: 6 }
     ]);

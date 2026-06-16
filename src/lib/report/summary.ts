@@ -46,14 +46,15 @@ export function summarizeReport(report: SecurityReport): SecurityReport {
     }
   }
 
-  if (report.tls.checked && !report.tls.valid) {
+  const isExpired =
+    report.tls.daysUntilExpiration !== undefined && report.tls.daysUntilExpiration < 0;
+  const expiresSoon =
+    report.tls.daysUntilExpiration !== undefined && report.tls.daysUntilExpiration < 30;
+
+  if (report.tls.checked && (!report.tls.valid || isExpired)) {
     riskScore += 30;
     recommendations.add(TLS_RENEWAL_RECOMMENDATION);
-  } else if (
-    report.tls.checked &&
-    report.tls.daysUntilExpiration !== undefined &&
-    report.tls.daysUntilExpiration < 30
-  ) {
+  } else if (report.tls.checked && expiresSoon) {
     riskScore += 15;
     recommendations.add(TLS_RENEWAL_RECOMMENDATION);
   }
@@ -63,12 +64,10 @@ export function summarizeReport(report: SecurityReport): SecurityReport {
   riskScore += Math.min(missingHeaders.length * 5, 30);
 
   if (missingHeaders.includes("content-security-policy")) {
-    riskScore += 5;
     recommendations.add(CSP_RECOMMENDATION);
   }
 
   if (missingHeaders.includes("strict-transport-security")) {
-    riskScore += 5;
     recommendations.add(HSTS_RECOMMENDATION);
   }
 

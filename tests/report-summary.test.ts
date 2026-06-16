@@ -29,13 +29,20 @@ describe("summarizeReport", () => {
       })
     );
 
-    expect(report.riskScore).toBeGreaterThanOrEqual(45);
+    expect(report.riskScore).toBe(40);
     expect(report.recommendations).toContain("Review exposed Redis access and restrict it to trusted networks.");
     expect(report.summary).toContain("Review recommended");
   });
 
   it("raises risk for expired certificates", () => {
     const report = summarizeReport(baseReport({ tls: { checked: true, valid: false, daysUntilExpiration: -3 } }));
+
+    expect(report.riskScore).toBeGreaterThanOrEqual(30);
+    expect(report.recommendations).toContain("Renew or replace the TLS certificate.");
+  });
+
+  it("raises expired certificate risk even when TLS validity is true", () => {
+    const report = summarizeReport(baseReport({ tls: { checked: true, valid: true, daysUntilExpiration: -3 } }));
 
     expect(report.riskScore).toBeGreaterThanOrEqual(30);
     expect(report.recommendations).toContain("Renew or replace the TLS certificate.");

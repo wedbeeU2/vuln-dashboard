@@ -151,7 +151,7 @@ describe("scan API routes", () => {
       data: {
         userId: "user_123",
         target: "example.com",
-        normalizedTarget: "",
+        normalizedTarget: "example.com",
         status: "running"
       }
     });
@@ -169,15 +169,54 @@ describe("scan API routes", () => {
     expect(await response.json()).toEqual({ scan: { id: "scan_123", status: "completed" } });
   });
 
+  it("stores and scans only the normalized host from URL-shaped input", async () => {
+    scanModel.create.mockResolvedValue({ id: "scan_123", status: "running" });
+    scanModel.update.mockResolvedValue({ id: "scan_123", status: "completed" });
+    runSecurityScanMock.mockResolvedValue({
+      target: "example.com",
+      normalizedTarget: "example.com",
+      scannedAt: "2026-06-16T00:00:00.000Z",
+      riskScore: 20,
+      summary: "No urgent issues found in the v1 checks.",
+      ports: [],
+      tls: { checked: true, valid: true },
+      headers: [],
+      dns: { records: {}, errors: {} },
+      recommendations: []
+    });
+    const { POST } = await import("@/app/api/scans/route");
+
+    const response = await POST(jsonRequest({ target: "https://user:pass@example.com/path?token=secret" }));
+
+    expect(response.status).toBe(200);
+    expect(scanModel.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user_123",
+        target: "example.com",
+        normalizedTarget: "example.com",
+        status: "running"
+      }
+    });
+    expect(runSecurityScanMock).toHaveBeenCalledWith("example.com");
+  });
+
   it("marks the scan failed and returns 400 when scan execution fails", async () => {
     scanModel.create.mockResolvedValue({ id: "scan_123", status: "running" });
     scanModel.update.mockResolvedValue({ id: "scan_123", status: "failed", error: "Scan failed" });
     runSecurityScanMock.mockRejectedValue(new Error("Scan failed"));
     const { POST } = await import("@/app/api/scans/route");
 
-    const response = await POST(jsonRequest({ target: "bad target" }));
+    const response = await POST(jsonRequest({ target: "example.com" }));
 
     expect(response.status).toBe(400);
+    expect(scanModel.create).toHaveBeenCalledWith({
+      data: {
+        userId: "user_123",
+        target: "example.com",
+        normalizedTarget: "example.com",
+        status: "running"
+      }
+    });
     expect(scanModel.update).toHaveBeenCalledWith({
       where: { id: "scan_123" },
       data: { status: "failed", error: "Scan failed" }
@@ -186,6 +225,17 @@ describe("scan API routes", () => {
       error: "Scan failed",
       scan: { id: "scan_123", status: "failed", error: "Scan failed" }
     });
+  });
+
+  it("rejects invalid targets before creating a scan row", async () => {
+    const { POST } = await import("@/app/api/scans/route");
+
+    const response = await POST(jsonRequest({ target: "bad target" }));
+
+    expect(response.status).toBe(400);
+    expect(scanModel.create).not.toHaveBeenCalled();
+    expect(runSecurityScanMock).not.toHaveBeenCalled();
+    expect((await response.json()).error).toBe("Enter a valid public domain or IP address");
   });
 
   it("exports an owned completed scan report as a PDF attachment", async () => {

@@ -29,9 +29,61 @@ describe("summarizeReport", () => {
       })
     );
 
-    expect(report.riskScore).toBe(40);
+    expect(report.riskScore).toBe(43);
     expect(report.recommendations).toContain("Review exposed Redis access and restrict it to trusted networks.");
     expect(report.summary).toContain("Review recommended");
+  });
+
+  it("does not raise risk for normal public web ports by themselves", () => {
+    const report = summarizeReport(
+      baseReport({
+        ports: [
+          { port: 80, service: "HTTP", status: "open" },
+          { port: 443, service: "HTTPS", status: "open" },
+          { port: 8080, service: "HTTP alternate", status: "open" },
+          { port: 8443, service: "HTTPS alternate", status: "open" }
+        ]
+      })
+    );
+
+    expect(report.riskScore).toBe(0);
+    expect(report.summary).toBe("No urgent issues found in the v1 checks.");
+  });
+
+  it("raises review-level risk for exposed FTP", () => {
+    const report = summarizeReport(
+      baseReport({
+        ports: [{ port: 21, service: "FTP", status: "open" }]
+      })
+    );
+
+    expect(report.riskScore).toBe(25);
+    expect(report.summary).toContain("Review recommended");
+    expect(report.recommendations).toContain("Review exposed FTP access and prefer secure transfer methods.");
+  });
+
+  it("deduplicates successful missing header findings and caps their score", () => {
+    const missing = [
+      "content-security-policy",
+      "strict-transport-security",
+      "x-frame-options",
+      "x-content-type-options",
+      "referrer-policy",
+      "permissions-policy"
+    ];
+    const report = summarizeReport(
+      baseReport({
+        headers: [
+          { url: "https://example.com", status: 200, present: {}, missing, warnings: [] },
+          { url: "http://example.com", status: 200, present: {}, missing, warnings: [] }
+        ]
+      })
+    );
+
+    expect(report.riskScore).toBe(25);
+    expect(report.summary).toContain("Review recommended");
+    expect(report.recommendations).toContain("Add a Content-Security-Policy header to reduce script injection risk.");
+    expect(report.recommendations).toContain("Add Strict-Transport-Security so browsers require HTTPS.");
   });
 
   it("raises risk for expired certificates", () => {

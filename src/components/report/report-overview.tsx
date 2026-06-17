@@ -10,8 +10,9 @@ import type { SecurityReport } from "@/types/report";
 
 export function ReportOverview({ report, scanId }: { report: SecurityReport; scanId: string }) {
   const openPorts = report.ports.filter((port) => port.status === "open");
-  const tlsMeta = report.tls.error
-    ? "Unavailable"
+  const tlsUnavailable = Boolean(report.tls.error);
+  const tlsMeta = tlsUnavailable
+    ? "No HTTPS response"
     : report.tls.daysUntilExpiration !== undefined
       ? `Expires in ${report.tls.daysUntilExpiration} days`
       : "Certificate checked";
@@ -45,8 +46,8 @@ export function ReportOverview({ report, scanId }: { report: SecurityReport; sca
         <Metric
           label="TLS"
           meta={tlsMeta}
-          tone={report.tls.error ? "warn" : report.tls.valid ? "secure" : "critical"}
-          value={report.tls.error ? "Unavailable" : report.tls.valid ? "Valid" : "Invalid"}
+          tone={tlsUnavailable ? "warn" : report.tls.valid ? "secure" : "critical"}
+          value={tlsUnavailable ? "Not available" : report.tls.valid ? "Valid" : "Invalid"}
         />
       </div>
     </Card>

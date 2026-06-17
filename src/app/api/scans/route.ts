@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { runSecurityScan } from "@/lib/scanner/run-scan";
+import { normalizeTarget } from "@/lib/scanner/target";
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Scan failed";
@@ -47,12 +48,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const target = await targetFromRequest(request);
+  const rawTarget = await targetFromRequest(request);
+  let target: string;
+
+  try {
+    target = normalizeTarget(rawTarget).host;
+  } catch (error) {
+    return NextResponse.json({ error: errorMessage(error) }, { status: 400 });
+  }
+
   const scan = await prisma.scan.create({
     data: {
       userId: session.user.id,
       target,
-      normalizedTarget: "",
+      normalizedTarget: target,
       status: "running"
     }
   });

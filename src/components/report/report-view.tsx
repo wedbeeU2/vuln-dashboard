@@ -10,6 +10,12 @@ import { RawDetails } from "@/components/report/raw-details";
 import { ReportOverview } from "@/components/report/report-overview";
 import { ReportSectionCard } from "@/components/report/report-section-card";
 import { RunningReport } from "@/components/report/running-report";
+import {
+  getDnsRows,
+  getPortStatusLabel,
+  getPortStatusTone,
+  selectDisplayHeader
+} from "@/lib/report/presentation";
 import { normalizeScanStatus } from "@/lib/ui/scan-presenters";
 import type { SecurityReport } from "@/types/report";
 
@@ -21,8 +27,6 @@ type ScanForReport = {
   error?: string | null;
   report?: unknown;
 };
-
-const riskyPorts = new Set([21, 23, 3306, 5432, 6379]);
 
 export function ReportView({ scan }: { scan: ScanForReport }) {
   const status = normalizeScanStatus(scan.status);
@@ -50,8 +54,8 @@ export function ReportView({ scan }: { scan: ScanForReport }) {
 
 function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: string }) {
   const openPorts = report.ports.filter((port) => port.status === "open");
-  const firstHeader = report.headers[0];
-  const dnsErrorEntries = Object.entries(report.dns.errors ?? {});
+  const displayHeader = selectDisplayHeader(report.headers);
+  const dnsRows = getDnsRows(report.dns);
 
   return (
     <>
@@ -63,7 +67,7 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
           ) : (
             report.ports.map((port, index) => {
               const exposed = port.status === "open";
-              const risky = exposed && riskyPorts.has(port.port);
+              const tone = getPortStatusTone(port);
               return (
                 <DataRow
                   divider={index < report.ports.length - 1}
@@ -71,14 +75,14 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
                   label={`${port.port} / ${port.service}`}
                   status={
                     exposed ? (
-                      <Badge tone={risky ? "critical" : "secure"}>
-                        {risky ? <AlertTriangle aria-hidden="true" className="h-3 w-3" /> : <Check aria-hidden="true" className="h-3 w-3" />}
-                        {risky ? "Exposed" : "Open"}
+                      <Badge tone={tone}>
+                        {tone === "critical" ? <AlertTriangle aria-hidden="true" className="h-3 w-3" /> : <Check aria-hidden="true" className="h-3 w-3" />}
+                        {getPortStatusLabel(port)}
                       </Badge>
                     ) : (
-                      <Badge tone="neutral">
-                        <Minus aria-hidden="true" className="h-3 w-3" />
-                        {port.status}
+                      <Badge tone={tone}>
+                        {port.status === "error" ? <X aria-hidden="true" className="h-3 w-3" /> : <Minus aria-hidden="true" className="h-3 w-3" />}
+                        {getPortStatusLabel(port)}
                       </Badge>
                     )
                   }
@@ -90,7 +94,7 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
 
         <ReportSectionCard description="HTTPS on port 443" title="TLS certificate">
           {report.tls.error ? (
-            <Banner icon="shield" tone="warn" title="TLS unavailable">
+            <Banner icon="shield" tone="warn" title="TLS not available">
               {report.tls.error}
             </Banner>
           ) : (
@@ -115,18 +119,18 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
           )}
         </ReportSectionCard>
 
-        <ReportSectionCard description={firstHeader?.url ?? "HTTP response"} title="HTTP security headers">
-          {!firstHeader ? (
+        <ReportSectionCard description={displayHeader?.url ?? "HTTP response"} title="HTTP security headers">
+          {!displayHeader ? (
             <Banner icon="cloud" tone="warn" title="Headers unavailable">
               No HTTP header probe result was returned.
             </Banner>
-          ) : firstHeader.error ? (
+          ) : displayHeader.error ? (
             <Banner icon="cloud" tone="warn" title="Headers unavailable">
-              {firstHeader.error}
+              {displayHeader.error}
             </Banner>
           ) : (
             <>
-              {Object.entries(firstHeader.present).map(([header, value]) => (
+              {Object.entries(displayHeader.present).map(([header, value]) => (
                 <DataRow
                   key={header}
                   label={header}
@@ -141,9 +145,9 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
                   value={value}
                 />
               ))}
-              {firstHeader.missing.map((header, index) => (
+              {displayHeader.missing.map((header, index) => (
                 <DataRow
-                  divider={index < firstHeader.missing.length - 1}
+                  divider={index < displayHeader.missing.length - 1}
                   key={header}
                   label={header}
                   mono={false}
@@ -155,7 +159,7 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
                   }
                 />
               ))}
-              {firstHeader.warnings.map((warning) => (
+              {displayHeader.warnings.map((warning) => (
                 <Banner icon="alert" key={warning} tone="warn">
                   {warning}
                 </Banner>
@@ -165,22 +169,19 @@ function CompletedReport({ report, scanId }: { report: SecurityReport; scanId: s
         </ReportSectionCard>
 
         <ReportSectionCard title="DNS records">
-          {Object.entries(report.dns.records).map(([type, values]) => (
-            <DataRow key={type} label={type} stack value={values.join(" | ")} />
-          ))}
-          {dnsErrorEntries.map(([type, error], index) => (
+          {dnsRows.map((row, index) => (
             <DataRow
-              divider={index < dnsErrorEntries.length - 1}
-              key={type}
-              label={type}
+              divider={index < dnsRows.length - 1}
+              key={row.type}
+              label={row.type}
               stack
-              status={
-                <Badge tone="warn">
+              status={row.label ? (
+                <Badge tone={row.tone}>
                   <Minus aria-hidden="true" className="h-3 w-3" />
-                  Unavailable
+                  {row.label}
                 </Badge>
-              }
-              value={error}
+              ) : undefined}
+              value={row.value}
             />
           ))}
         </ReportSectionCard>

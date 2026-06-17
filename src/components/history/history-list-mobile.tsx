@@ -15,7 +15,7 @@ export function HistoryListMobile({ scans }: { scans: ScanSummary[] }) {
   return (
     <div className="grid gap-3 md:hidden">
       {scans.map((scan) => {
-        const clickable = normalizeScanStatus(scan.status) === "completed";
+        const completed = normalizeScanStatus(scan.status) === "completed";
         const content = (
           <>
             <div className="flex items-start justify-between gap-3">
@@ -26,7 +26,7 @@ export function HistoryListMobile({ scans }: { scans: ScanSummary[] }) {
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs text-muted">{formatScanDate(scan.createdAt)}</span>
-              {clickable ? (
+              {completed ? (
                 <Badge tone={getRiskTone(scan.riskScore)}>{scan.riskScore}/100</Badge>
               ) : (
                 <span className="text-xs text-slate-400">No score</span>
@@ -34,14 +34,6 @@ export function HistoryListMobile({ scans }: { scans: ScanSummary[] }) {
             </div>
           </>
         );
-
-        if (!clickable) {
-          return (
-            <div className="grid gap-3 rounded-lg border border-line bg-white p-4 shadow-panel" key={scan.id}>
-              {content}
-            </div>
-          );
-        }
 
         return (
           <Link

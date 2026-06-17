@@ -27,12 +27,12 @@ export function HistoryTable({ scans }: { scans: ScanSummary[] }) {
         ))}
       </div>
       {scans.map((scan) => {
-        const clickable = normalizeScanStatus(scan.status) === "completed";
+        const completed = normalizeScanStatus(scan.status) === "completed";
         const row = (
           <>
             <span className="truncate font-mono text-sm font-semibold text-ink">{displayTarget(scan)}</span>
             <span>
-              {clickable ? (
+              {completed ? (
                 <Badge tone={getRiskTone(scan.riskScore)}>{scan.riskScore}/100</Badge>
               ) : (
                 <span className="text-sm text-slate-400">No score</span>
@@ -43,21 +43,10 @@ export function HistoryTable({ scans }: { scans: ScanSummary[] }) {
             </span>
             <span className="text-sm text-muted">{formatScanDate(scan.createdAt)}</span>
             <span className="flex justify-end">
-              {clickable ? <ChevronRight aria-hidden="true" className="h-4 w-4 text-slate-400" /> : null}
+              <ChevronRight aria-hidden="true" className="h-4 w-4 text-slate-400" />
             </span>
           </>
         );
-
-        if (!clickable) {
-          return (
-            <div
-              className="grid min-h-12 grid-cols-[1fr_120px_130px_160px_40px] items-center gap-3 border-b border-line px-5 py-3 last:border-b-0"
-              key={scan.id}
-            >
-              {row}
-            </div>
-          );
-        }
 
         return (
           <Link

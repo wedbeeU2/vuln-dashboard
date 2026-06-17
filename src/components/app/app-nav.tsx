@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Clock, LayoutDashboard, ShieldCheck } from "lucide-react";
 
 import { AuthButton } from "@/components/auth-button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/ui/styles";
 
 function initialsFromEmail(email?: string | null) {
@@ -55,9 +54,6 @@ export function AppNav({ email }: { email?: string | null }) {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className="hidden sm:inline-flex" tone="neutral">
-            Rate limit 9 left
-          </Badge>
           {email ? <span className="hidden max-w-[220px] truncate text-sm text-muted lg:inline">{email}</span> : null}
           <span
             aria-hidden="true"

@@ -43,7 +43,7 @@ export function RecentScans({ scans }: { scans: ScanSummary[] }) {
         <div className="divide-y divide-line">
           {scans.slice(0, 6).map((scan) => {
             const status = normalizeScanStatus(scan.status);
-            const clickable = status === "completed";
+            const riskText = status === "completed" ? `, risk ${scan.riskScore} of 100` : "";
             const content = (
               <>
                 <div className="flex min-w-0 items-center gap-3">
@@ -62,22 +62,14 @@ export function RecentScans({ scans }: { scans: ScanSummary[] }) {
                     </Badge>
                   ) : null}
                   <StatusBadge status={scan.status} />
-                  {clickable ? <ChevronRight aria-hidden="true" className="h-4 w-4 text-slate-400" /> : null}
+                  <ChevronRight aria-hidden="true" className="h-4 w-4 text-slate-400" />
                 </div>
               </>
             );
 
-            if (!clickable) {
-              return (
-                <div className="flex min-h-11 items-center justify-between gap-3 py-3" key={scan.id}>
-                  {content}
-                </div>
-              );
-            }
-
             return (
               <Link
-                aria-label={`${displayTarget(scan)} report, risk ${scan.riskScore} of 100`}
+                aria-label={`${displayTarget(scan)} report${riskText}`}
                 className="flex min-h-11 items-center justify-between gap-3 py-3 transition-with-motion hover:bg-slate-50"
                 href={`/scans/${scan.id}`}
                 key={scan.id}

@@ -1,8 +1,6 @@
 # Security Scanner Dashboard
 
-Security Scanner Dashboard is a full-stack security reporting app for public domains and IP addresses. The goal is to let authenticated users run real checks, review scan history, and export professional reports while keeping responsible-use controls built into the product.
-
-The implementation currently includes the Next.js scaffold, Prisma data model, and Google OAuth foundation. Scanner execution, report rendering, PDF export, and the Chrome extension are planned next.
+Security Scanner Dashboard is a full-stack security reporting app for public domains and IP addresses. Authenticated users can run real checks, review scan history, open structured reports, and export PDF summaries while responsible-use controls stay built into the product.
 
 ## Current Status
 
@@ -11,14 +9,15 @@ Completed:
 - Next.js, TypeScript, Tailwind CSS, Vitest, and ESLint scaffold.
 - Prisma schema for users, sessions, OAuth accounts, and scans.
 - Google OAuth wiring with explicit environment validation.
+- Public target validation and private-network blocking.
+- DNS, TLS, HTTP security header, and common-port scanner modules.
+- Authenticated scan API routes with owner-scoped history and reports.
+- Dashboard, report view, scan history, and PDF export.
 
 Next planned work:
 
-- Public target validation and private-network blocking.
-- DNS, TLS, HTTP security header, and common-port scanner modules.
-- Authenticated scan API routes.
-- Dashboard, report view, scan history, and PDF export.
 - Chrome Extension Manifest V3 companion popup.
+- Deployment hardening and production operations polish.
 
 ## Planned Features
 
@@ -42,7 +41,7 @@ Next planned work:
 - **Tailwind CSS** for a clean security-operations dashboard UI.
 - **Vitest** for unit tests around validation and report logic.
 - **Chrome Extension Manifest V3** for the browser companion.
-- **PDF rendering** planned with a server-side React PDF workflow.
+- **React PDF** for server-side report export.
 
 ## Architecture
 

@@ -28,6 +28,17 @@ vi.mock("@/lib/scanner/run-scan", () => ({
   runSecurityScan: vi.fn()
 }));
 
+vi.mock("@react-pdf/renderer", () => ({
+  Document: "Document",
+  Page: "Page",
+  StyleSheet: { create: (styles: unknown) => styles },
+  Text: "Text",
+  View: "View",
+  pdf: vi.fn(() => ({
+    toBlob: vi.fn(async () => new Blob(["pdf"], { type: "application/pdf" }))
+  }))
+}));
+
 const getCurrentSessionMock = vi.mocked(getCurrentSession);
 const checkRateLimitMock = vi.mocked(checkRateLimit);
 const runSecurityScanMock = vi.mocked(runSecurityScan);
@@ -175,5 +186,54 @@ describe("scan API routes", () => {
       error: "Scan failed",
       scan: { id: "scan_123", status: "failed", error: "Scan failed" }
     });
+  });
+
+  it("exports an owned completed scan report as a PDF attachment", async () => {
+    scanModel.findFirst.mockResolvedValue({
+      id: "scan_123",
+      userId: "user_123",
+      normalizedTarget: "example.com",
+      status: "completed",
+      report: {
+        target: "example.com",
+        normalizedTarget: "example.com",
+        scannedAt: "2026-06-16T00:00:00.000Z",
+        riskScore: 20,
+        summary: "No urgent issues found in the v1 checks.",
+        ports: [],
+        tls: { checked: true, valid: true },
+        headers: [],
+        dns: { records: {}, errors: {} },
+        recommendations: []
+      }
+    });
+    const { GET } = await import("@/app/api/scans/[scanId]/pdf/route");
+
+    const response = await GET(new Request("http://localhost/api/scans/scan_123/pdf"), {
+      params: Promise.resolve({ scanId: "scan_123" })
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/pdf");
+    expect(response.headers.get("content-disposition")).toContain("security-report-example.com.pdf");
+    expect(scanModel.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "scan_123",
+        userId: "user_123",
+        status: "completed"
+      }
+    });
+  });
+
+  it("does not export missing or non-owned PDF reports", async () => {
+    scanModel.findFirst.mockResolvedValue(null);
+    const { GET } = await import("@/app/api/scans/[scanId]/pdf/route");
+
+    const response = await GET(new Request("http://localhost/api/scans/scan_404/pdf"), {
+      params: Promise.resolve({ scanId: "scan_404" })
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Report not found" });
   });
 });

@@ -3,6 +3,9 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 
 import { StatusBadge } from "@/components/app/status-badge";
+import { RecentScans } from "@/components/dashboard/recent-scans";
+import { HistoryListMobile } from "@/components/history/history-list-mobile";
+import { HistoryTable } from "@/components/history/history-table";
 import { RiskMeter } from "@/components/security/risk-meter";
 import {
   filterScans,
@@ -67,5 +70,35 @@ describe("security UI primitives", () => {
     expect(html).toContain("100");
     expect(html).toContain("High attention");
     expect(html).toContain("aria-label=\"Risk score 100 of 100");
+  });
+
+  it("links non-completed scan rows to their report pages", () => {
+    const scans = [
+      {
+        id: "scan_running",
+        target: "example.com",
+        normalizedTarget: "example.com",
+        status: "running",
+        riskScore: 0,
+        createdAt: "2026-06-16T12:00:00.000Z"
+      },
+      {
+        id: "scan_failed",
+        target: "openai.com",
+        normalizedTarget: "openai.com",
+        status: "failed",
+        riskScore: 0,
+        createdAt: "2026-06-16T12:00:00.000Z"
+      }
+    ];
+
+    const recentHtml = renderToStaticMarkup(<RecentScans scans={scans} />);
+    const tableHtml = renderToStaticMarkup(<HistoryTable scans={scans} />);
+    const mobileHtml = renderToStaticMarkup(<HistoryListMobile scans={scans} />);
+
+    for (const html of [recentHtml, tableHtml, mobileHtml]) {
+      expect(html).toContain("href=\"/scans/scan_running\"");
+      expect(html).toContain("href=\"/scans/scan_failed\"");
+    }
   });
 });

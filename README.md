@@ -89,11 +89,14 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="replace-with-a-random-secret"
 GOOGLE_CLIENT_ID="replace-with-google-client-id"
 GOOGLE_CLIENT_SECRET="replace-with-google-client-secret"
+# Optional resolver override for DNS record lookups:
+SCAN_DNS_SERVERS="1.1.1.1,8.8.8.8"
 ```
 
-Generate Prisma Client:
+Create the database, apply migrations, and generate Prisma Client. The Prisma CLI reads `.env` by default, so either export `DATABASE_URL` in your shell or also keep an uncommitted `.env` file for CLI commands.
 
 ```bash
+npm run prisma:migrate
 npm run prisma:generate
 ```
 

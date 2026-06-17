@@ -8,13 +8,24 @@ import { Button } from "@/components/ui/button";
 export function AuthButton({ mode = "full" }: { mode?: "full" | "compact" }) {
   const { data: session, status } = useSession();
 
+  async function handleSignIn() {
+    const result = await signIn("google", {
+      callbackUrl: "/",
+      redirect: false
+    });
+
+    if (result?.url) {
+      window.location.assign(result.url);
+    }
+  }
+
   if (status === "loading") {
     return <span className="text-sm text-muted">Checking session...</span>;
   }
 
   if (!session?.user) {
     return (
-      <Button onClick={() => signIn("google")} type="button" variant="primary">
+      <Button onClick={handleSignIn} type="button" variant="primary">
         Sign in with Google
       </Button>
     );

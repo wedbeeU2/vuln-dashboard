@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { StatusBadge } from "@/components/app/status-badge";
 import { RecentScans } from "@/components/dashboard/recent-scans";
+import { HistoryFilters } from "@/components/history/history-filters";
 import { HistoryListMobile } from "@/components/history/history-list-mobile";
 import { HistoryTable } from "@/components/history/history-table";
 import { RiskMeter } from "@/components/security/risk-meter";
@@ -100,5 +101,19 @@ describe("security UI primitives", () => {
       expect(html).toContain("href=\"/scans/scan_running\"");
       expect(html).toContain("href=\"/scans/scan_failed\"");
     }
+  });
+
+  it("renders history search with an explicit submit control", () => {
+    const html = renderToStaticMarkup(
+      <HistoryFilters
+        counts={{ all: 1, completed: 1, failed: 0, queued: 0, running: 0 }}
+        q=""
+        status="all"
+      />
+    );
+
+    expect(html).toContain("name=\"q\"");
+    expect(html).toContain("type=\"submit\"");
+    expect(html).toContain("Search");
   });
 });

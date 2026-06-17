@@ -40,7 +40,7 @@ export function ScanForm() {
         return;
       }
 
-      router.push(`/scans/${payload.scan.id}`);
+      router.push(`/scans/${payload.scan.id}`, { scroll: false });
       router.refresh();
     } catch {
       setError("The scanner is temporarily unavailable. Try again shortly.");

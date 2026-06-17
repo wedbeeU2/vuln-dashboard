@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/input";
 import { cn } from "@/lib/ui/styles";
 import type { StatusFilter } from "@/lib/ui/scan-presenters";
@@ -24,7 +25,7 @@ export function HistoryFilters({
 }) {
   return (
     <div className="flex flex-wrap items-end gap-3">
-      <form action="/history" className="min-w-[220px] flex-1 sm:max-w-[360px]">
+      <form action="/history" className="grid min-w-[220px] flex-1 gap-2 sm:max-w-[480px] sm:grid-cols-[1fr_auto] sm:items-end">
         <input name="status" type="hidden" value={status} />
         <TextInput
           defaultValue={q}
@@ -33,6 +34,14 @@ export function HistoryFilters({
           name="q"
           placeholder="Search by target..."
         />
+        <Button
+          className="h-[46px] w-full sm:w-auto"
+          iconLeft={<Search aria-hidden="true" className="h-4 w-4" />}
+          type="submit"
+          variant="secondary"
+        >
+          Search
+        </Button>
       </form>
       <div
         aria-label="Filter by status"

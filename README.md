@@ -13,10 +13,10 @@ Completed:
 - DNS, TLS, HTTP security header, and common-port scanner modules.
 - Authenticated scan API routes with owner-scoped history and reports.
 - Dashboard, report view, scan history, and PDF export.
+- Chrome Extension Manifest V3 companion popup.
 
 Next planned work:
 
-- Chrome Extension Manifest V3 companion popup.
 - Deployment hardening and production operations polish.
 
 ## Planned Features
@@ -108,6 +108,21 @@ Open:
 ```text
 http://localhost:3000
 ```
+
+## Chrome Extension
+
+The companion extension lives in `extension/`. It reads the current website tab hostname and sends it to the same authenticated backend scanner API used by the web dashboard.
+
+Local loading:
+
+1. Run the web app at `http://localhost:3000`.
+2. Sign in to the dashboard.
+3. Open Chrome extensions and enable Developer mode.
+4. Choose "Load unpacked".
+5. Select the `extension` folder.
+6. Open a public website tab and run the popup scan.
+
+Browser pages, extension pages, and empty tabs are not scanned. Backend validation still blocks private, local, reserved, and malformed targets.
 
 ## Verification
 

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Security Scanner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <span class="mark" aria-hidden="true">S</span>
+        <div>
+          <h1>Security Scanner</h1>
+          <p id="status" class="status" role="status" aria-live="polite">Reading current tab...</p>
+        </div>
+      </header>
+
+      <section class="target-panel" aria-label="Current target">
+        <span class="label">Current target</span>
+        <strong id="target">Detecting...</strong>
+      </section>
+
+      <button id="scan" class="scan-button" type="button" disabled>Scan current domain</button>
+
+      <div id="result" class="result" hidden></div>
+
+      <footer class="footer">
+        <a id="dashboard" href="http://localhost:3000" target="_blank" rel="noreferrer">Open dashboard</a>
+      </footer>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

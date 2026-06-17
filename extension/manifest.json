@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Security Scanner Companion",
+  "version": "0.1.0",
+  "description": "Scan the current tab hostname with the Security Scanner backend.",
+  "permissions": ["activeTab", "tabs"],
+  "host_permissions": ["http://localhost:3000/*", "http://127.0.0.1:3000/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Security Scanner"
+  }
+}

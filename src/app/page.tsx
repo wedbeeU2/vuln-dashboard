@@ -1,19 +1,37 @@
-import { AuthButton } from "@/components/auth-button";
+import React from "react";
 
-export default function HomePage() {
+import { AppNav } from "@/components/app/app-nav";
+import { PageHead, PageShell } from "@/components/app/page-shell";
+import { ScanForm } from "@/components/dashboard/scan-form";
+import { RecentScans } from "@/components/dashboard/recent-scans";
+import { SignedOutGate } from "@/components/dashboard/signed-out-gate";
+import { getCurrentSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export default async function HomePage() {
+  const session = await getCurrentSession();
+
+  if (!session?.user?.id) {
+    return <SignedOutGate />;
+  }
+
+  const scans = await prisma.scan.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    where: { userId: session.user.id }
+  });
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-normal text-ink">
-            Security Scanner Dashboard
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-            Sign in, scan a public domain or IP, and generate a structured security report.
-          </p>
-        </div>
-        <AuthButton />
-      </header>
-    </main>
+    <>
+      <AppNav email={session.user.email} />
+      <PageShell>
+        <PageHead
+          subtitle="Run real checks against public targets you have permission to assess."
+          title="Scanner dashboard"
+        />
+        <ScanForm />
+        <RecentScans scans={scans} />
+      </PageShell>
+    </>
   );
 }

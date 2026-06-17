@@ -4,6 +4,22 @@
 
 :root {
   color-scheme: light;
+  --surface-app: #f6f8fb;
+  --surface-card: #ffffff;
+  --surface-sunken: #f6f8fb;
+  --surface-inverse: #111827;
+  --text-strong: #111827;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --border-default: #d8dee8;
+  --border-strong: #cbd5e1;
+  --border-focus: #2563eb;
+  --ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  --control-height: 44px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 * {
@@ -12,12 +28,38 @@
 
 body {
   margin: 0;
-  background: #f6f8fb;
-  color: #111827;
+  background: var(--surface-app);
+  color: var(--text-strong);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.transition-with-motion {
+  transition-duration: 150ms;
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform, width;
+  transition-timing-function: ease;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

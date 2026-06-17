@@ -1,8 +1,11 @@
 "use client";
 
+import React from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-export function AuthButton() {
+import { Button } from "@/components/ui/button";
+
+export function AuthButton({ mode = "full" }: { mode?: "full" | "compact" }) {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
@@ -11,26 +14,26 @@ export function AuthButton() {
 
   if (!session?.user) {
     return (
-      <button
-        className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white"
-        onClick={() => signIn("google")}
-        type="button"
-      >
+      <Button onClick={() => signIn("google")} type="button" variant="primary">
         Sign in with Google
-      </button>
+      </Button>
+    );
+  }
+
+  if (mode === "compact") {
+    return (
+      <Button onClick={() => signOut()} size="sm" type="button" variant="secondary">
+        Sign out
+      </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <span className="text-sm text-muted">{session.user.email}</span>
-      <button
-        className="rounded-md border border-line px-3 py-2 text-sm font-semibold text-ink"
-        onClick={() => signOut()}
-        type="button"
-      >
+      <Button onClick={() => signOut()} type="button" variant="secondary">
         Sign out
-      </button>
+      </Button>
     </div>
   );
 }
